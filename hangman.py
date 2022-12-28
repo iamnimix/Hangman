@@ -36,7 +36,7 @@ class Bank:
         self.current_word = choice(self.topics[self.current_topic])
         for i in self.current_word:
             self.current_word_display.append('_')
-        print(f'Word is {self.current_word} letters long.')
+        print(f'Word is {len(self.current_word)} letters long.')
         print(self.current_word_display)
 
     def check_solve(self):

@@ -1,5 +1,7 @@
+import json
 from random import choice
 import re
+import requests
 
 
 class Bank:
@@ -28,6 +30,10 @@ class Bank:
             word = json.loads(response.text)
             self.api_response_status = True
             self.current_word = word['word']
+            for i in self.current_word:
+                self.current_word_display.append('_')
+            print(self.current_word_display)
+            print(f'Word is {len(self.current_word)} letters long.')
         else:
             self.current_word = choice(self.topics[self.current_topic])
             self.api_response_status = False
@@ -43,9 +49,10 @@ class Bank:
         self.not_solved = self.letters_guessed_counter < len(self.current_word)
 
 
+
 class Player:
-    def __init__(self):
-        self.lives = 10
+    def __init__(self, current_word):
+        self.lives = 3 * len(current_word.current_word_display)
         self.answer = ''
         self.guess_validation_incomplete = True
 
@@ -89,32 +96,56 @@ class Main:
 
     while True:
         word_bank = Bank()
-        player1 = Player()
+        word_bank.get_word()
+        player1 = Player(word_bank)
         game = Processes()
 
-        word_bank.pick_topic()
-        word_bank.pick_word()
+        if word_bank.api_response_status:
+            while word_bank.not_solved and player1.lives >= 1:
+                while player1.guess_validation_incomplete:
+                    player1.guess()
+                    game.validate_user_input(player1)
+                    game.check_answer_update_lives(word_bank, player1)
+                print(word_bank.current_word_display)
+                player1.guess_validation_incomplete = True
+                word_bank.check_solve()
 
-        while word_bank.not_solved and player1.lives > 0:
-            while player1.guess_validation_incomplete:
-                player1.guess()
-                game.validate_user_input(player1)
-                game.check_answer_update_lives(word_bank, player1)
-            print(word_bank.current_word_display)
-            player1.guess_validation_incomplete = True
-            word_bank.check_solve()
+            if not word_bank.not_solved:
+                print('\nYou win!')
 
-        if not word_bank.not_solved:
-            print('\nYou win!')
+            else:
+                print('\nYou lose')
+                print('Word was {}'.format(word_bank.current_word))
+
+            replay = input('Press any key to play again, x to quit: ')
+            print('\n')
+            if replay.upper() == 'X':
+                break
 
         else:
-            print('\nYou lose')
-            print('Word was {}'.format(word_bank.current_word))
+            word_bank.pick_topic()
+            word_bank.pick_word()
+            while word_bank.not_solved and player1.lives > 0:
+                while player1.guess_validation_incomplete:
+                    player1.guess()
+                    game.validate_user_input(player1)
+                    game.check_answer_update_lives(word_bank, player1)
+                print(word_bank.current_word_display)
+                player1.guess_validation_incomplete = True
+                word_bank.check_solve()
 
-        replay = input('Press any key to play again, x to quit: ')
-        print('\n')
-        if replay.upper() == 'X':
-            break
+            if not word_bank.not_solved:
+                print('\nYou win!')
+
+            else:
+                print('\nYou lose')
+                print('Word was {}'.format(word_bank.current_word))
+
+            replay = input('Press any key to play again, x to quit: ')
+            print('\n')
+            if replay.upper() == 'X':
+                break
+
 
 
 Play = Main()
